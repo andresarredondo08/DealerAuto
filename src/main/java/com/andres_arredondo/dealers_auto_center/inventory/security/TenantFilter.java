@@ -21,14 +21,12 @@ public class TenantFilter extends OncePerRequestFilter {
 
         String path = request.getRequestURI();
 
-        if (path.startsWith("/admin")) {
+        if (shouldSkipTenantValidation(path)) {
             filterChain.doFilter(request, response);
             return;
         }
 
         String tenantId = request.getHeader("X-Tenant-Id");
-
-        System.out.println("TENANT HEADER = " + tenantId);
 
         if (tenantId == null || tenantId.isBlank()) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing X-Tenant-Id");
@@ -42,5 +40,13 @@ public class TenantFilter extends OncePerRequestFilter {
         } finally {
             TenantContext.clear();
         }
+    }
+
+    private boolean shouldSkipTenantValidation(String path) {
+        return path.startsWith("/admin")
+                || path.startsWith("/swagger-ui")
+                || path.startsWith("/v3/api-docs")
+                || path.startsWith("/h2-console")
+                || path.startsWith("/actuator");
     }
 }
